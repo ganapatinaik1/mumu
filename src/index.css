@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-primary: #8b5cf6; /* Indigo/Violet color for music theme */
+  --color-brand-dark: #121212;
+  --color-brand-card: #1e1e1e;
+}
+
+/* Google Fonts Import for Outfit & Inter */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+/* Custom scrollbars and styling */
+body {
+  background-color: #03000a;
+  color: #f3f4f6;
+  font-family: 'Outfit', 'Inter', system-ui, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Glow effects and glassmorphism helpers */
+.music-glow {
+  box-shadow: 0 0 50px -10px rgba(139, 92, 246, 0.15);
+}
+
+.glass-card {
+  background: rgba(18, 18, 18, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.bg-radial-gradient {
+  background: radial-gradient(circle at top left, rgba(139, 92, 246, 0.12) 0%, transparent 40%),
+              radial-gradient(circle at bottom right, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
+              #03000a;
+}
