@@ -19,7 +19,6 @@ create table public.profiles (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
   
-  -- Username rules (3 to 20 characters, lowercase alphanumeric/underscores)
   constraint username_length check (char_length(username) >= 3 and char_length(username) <= 20),
   constraint username_chars check (username ~ '^[a-z0-9_]+$')
 );
@@ -27,12 +26,10 @@ create table public.profiles (
 -- 2. Configure Row Level Security (RLS)
 alter table public.profiles enable row level security;
 
--- Option: Viewable by everyone (Required so users can search profiles & check availability before logging in)
 create policy "Allow profile reading for everyone"
   on public.profiles for select
   using (true);
 
--- Option: Update only own profile
 create policy "Allow profile updating for owners only"
   on public.profiles for update
   using (auth.uid() = id);
@@ -44,7 +41,6 @@ begin
   insert into public.profiles (id, username, display_name, avatar_url, bio, is_admin)
   values (
     new.id,
-    -- Extract username from metadata; default to placeholder if not found
     new.raw_user_meta_data->>'username',
     coalesce(new.raw_user_meta_data->>'display_name', new.raw_user_meta_data->>'username'),
     new.raw_user_meta_data->>'avatar_url',
@@ -83,7 +79,6 @@ create or replace trigger on_auth_user_created
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-6">
-          {/* Box 1: Env Configuration */}
           <div className="bg-neutral-900/50 rounded-2xl p-6 border border-zinc-800 flex flex-col justify-between">
             <div>
               <div className="flex justify-between items-center mb-4">
@@ -110,7 +105,6 @@ create or replace trigger on_auth_user_created
             </div>
           </div>
 
-          {/* Box 2: Supabase Schema */}
           <div className="bg-neutral-900/50 rounded-2xl p-6 border border-zinc-800">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-white font-semibold flex items-center gap-2">

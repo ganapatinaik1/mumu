@@ -24,7 +24,6 @@ export const PublicRoute: React.FC<PublicRouteProps> = ({ children }) => {
     );
   }
 
-  // If already authenticated, redirect to Home page
   if (user) {
     return <Navigate to="/" replace />;
   }

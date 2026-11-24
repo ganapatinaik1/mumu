@@ -9,7 +9,6 @@ interface ProtectedRouteProps {
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { user, loading, isConfigured } = useAuth();
 
-  // If Supabase credentials are missing, allow looking at the pages to see the warning card
   if (!isConfigured) {
     return <>{children}</>;
   }
