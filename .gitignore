@@ -34,4 +34,4 @@ dist-ssr
 Random icons/
 *.log
 hs_err_pid*.log
-replay_pid*.log
+replay_pid*.logandroid/
