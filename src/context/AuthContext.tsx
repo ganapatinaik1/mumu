@@ -21,7 +21,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Check if Supabase is properly configured
   const isConfigured = Boolean(
     import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY
   );
@@ -33,8 +32,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setError(null);
     } catch (err: any) {
       console.error('Error fetching user profile:', err);
-      // It's possible the trigger is still executing, or metadata profile failed to insert.
-      // We will allow users to be logged in but without a profile.
       setProfile(null);
     }
   };
@@ -64,7 +61,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         setUser(session.user);
@@ -74,10 +70,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
 
-    // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setLoading(true);
+      async (event, session) => {
+        if (event === 'INITIAL_SESSION') return;
         if (session?.user) {
           setUser(session.user);
           await fetchProfile(session.user.id);
@@ -85,7 +80,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(null);
           setProfile(null);
         }
-        setLoading(false);
       }
     );
 
