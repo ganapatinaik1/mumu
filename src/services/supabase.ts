@@ -11,7 +11,6 @@ if (!isSupabaseConfigured) {
   );
 }
 
-// Fallback to placeholder values if env variables are empty, to avoid initialization crash
 export const supabase = createClient(
   supabaseUrl || 'https://your-project.supabase.co',
   supabaseAnonKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dummykey'
