@@ -8,21 +8,14 @@ export const ResetPassword: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // Form Fields
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  // States
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // If a user navigates to this page by mistake and is not authenticated via the token email link,
-  // we do not block them entirely, but we can verify if they are eligible to change password.
-  // Supabase automatically logs user in temporarily with their recovery hash token when they visit the page,
-  // making auth.user active. So they must be logged in to reset password.
   useEffect(() => {
-    // If not logged in and not loading, redirect to login
     const checkUser = setTimeout(() => {
       if (!user) {
         setErrorMsg('Unauthorized access. Please click the reset link in your email to authenticate first.');
@@ -36,7 +29,6 @@ export const ResetPassword: React.FC = () => {
     setErrorMsg(null);
     setSuccess(false);
 
-    // Passwords validations
     if (password.length < 6) {
       setErrorMsg('Password must be at least 6 characters.');
       return;
@@ -66,7 +58,6 @@ export const ResetPassword: React.FC = () => {
   return (
     <div className="min-h-screen bg-radial-gradient py-12 px-4 sm:px-6 lg:px-8 flex flex-col justify-center items-center">
       <div className="max-w-md w-full glass-card music-glow rounded-3xl p-8 border border-white/5 shadow-2xl relative overflow-hidden">
-        {/* Glowing decorations */}
         <div className="absolute top-0 left-1/4 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
         <div className="absolute bottom-0 right-1/4 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
@@ -98,7 +89,6 @@ export const ResetPassword: React.FC = () => {
               </div>
             )}
 
-            {/* New Password */}
             <div>
               <label htmlFor="password" className="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">
                 New Password
@@ -121,7 +111,6 @@ export const ResetPassword: React.FC = () => {
               </div>
             </div>
 
-            {/* Confirm New Password */}
             <div>
               <label htmlFor="confirmPassword" className="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">
                 Confirm New Password
@@ -144,7 +133,6 @@ export const ResetPassword: React.FC = () => {
               </div>
             </div>
 
-            {/* Submit */}
             <button
               type="submit"
               disabled={loading || !user}

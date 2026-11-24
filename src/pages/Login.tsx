@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Music, Mail, Lock, Loader2, LogIn, AlertCircle } from 'lucide-react';
+import { Music, Mail, Lock, Loader2, LogIn, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { loginUser } from '../services/auth';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
 
-  // Form Fields
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
-  // Local States
   const [loading, setLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
 
@@ -21,12 +20,9 @@ export const Login: React.FC = () => {
 
     try {
       await loginUser(email.trim(), password);
-      // Wait for auth context to detect state change and handle redirection, 
-      // but we can also manually navigate to '/'
       navigate('/');
     } catch (err: any) {
       console.error('Login error:', err);
-      // Clean up common error messages
       if (err.message.includes('Invalid login credentials')) {
         setLoginError('Invalid email or password. Please verify and try again.');
       } else {
@@ -40,7 +36,6 @@ export const Login: React.FC = () => {
   return (
     <div className="min-h-screen bg-radial-gradient py-12 px-4 sm:px-6 lg:px-8 flex flex-col justify-center items-center">
       <div className="max-w-md w-full glass-card music-glow rounded-3xl p-8 border border-white/5 shadow-2xl relative overflow-hidden">
-        {/* Decorative ambient gradients */}
         <div className="absolute top-0 left-1/4 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
         <div className="absolute bottom-0 right-1/4 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
@@ -64,7 +59,6 @@ export const Login: React.FC = () => {
             </div>
           )}
 
-          {/* Email Address */}
           <div>
             <label htmlFor="email" className="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">
               Email Address
@@ -87,7 +81,6 @@ export const Login: React.FC = () => {
             </div>
           </div>
 
-          {/* Password */}
           <div>
             <div className="flex justify-between items-center mb-2">
               <label htmlFor="password" className="block text-xs font-semibold uppercase tracking-wider text-zinc-400">
@@ -97,25 +90,31 @@ export const Login: React.FC = () => {
                 Forgot password?
               </Link>
             </div>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-500">
-                <Lock className="h-4 w-4" />
-              </div>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                disabled={loading}
-                className="block w-full pl-10 py-3 bg-neutral-900/60 border border-white/5 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 text-sm transition-all duration-200"
-              />
-            </div>
+             <div className="relative">
+               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-500">
+                 <Lock className="h-4 w-4" />
+               </div>
+               <input
+                 id="password"
+                 name="password"
+                 type={showPassword ? 'text' : 'password'}
+                 required
+                 value={password}
+                 onChange={(e) => setPassword(e.target.value)}
+                 placeholder="••••••••"
+                 disabled={loading}
+                 className="block w-full pl-10 pr-10 py-3 bg-neutral-900/60 border border-white/5 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 text-sm transition-all duration-200"
+               />
+               <button
+                 type="button"
+                 onClick={() => setShowPassword(!showPassword)}
+                 className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-zinc-500 hover:text-zinc-300 transition-colors"
+               >
+                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+               </button>
+             </div>
           </div>
 
-          {/* Submit */}
           <button
             type="submit"
             disabled={loading}

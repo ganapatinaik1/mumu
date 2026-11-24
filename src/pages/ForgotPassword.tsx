@@ -30,7 +30,6 @@ export const ForgotPassword: React.FC = () => {
   return (
     <div className="min-h-screen bg-radial-gradient py-12 px-4 sm:px-6 lg:px-8 flex flex-col justify-center items-center">
       <div className="max-w-md w-full glass-card music-glow rounded-3xl p-8 border border-white/5 shadow-2xl relative overflow-hidden">
-        {/* Ambient background glows */}
         <div className="absolute top-0 left-1/4 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
         <div className="absolute bottom-0 right-1/4 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
@@ -68,7 +67,6 @@ export const ForgotPassword: React.FC = () => {
             </div>
           ) : (
             <>
-              {/* Email Address */}
               <div>
                 <label htmlFor="email" className="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">
                   Email Address
@@ -91,7 +89,6 @@ export const ForgotPassword: React.FC = () => {
                 </div>
               </div>
 
-              {/* Submit */}
               <button
                 type="submit"
                 disabled={loading}

@@ -1,9 +1,6 @@
 import { supabase } from './supabase';
 import type { Profile } from '../types';
 
-/**
- * Fetches the profile of a user by their UUID.
- */
 export const getUserProfile = async (userId: string): Promise<Profile> => {
   const { data, error } = await supabase
     .from('profiles')
@@ -15,10 +12,20 @@ export const getUserProfile = async (userId: string): Promise<Profile> => {
   return data;
 };
 
-/**
- * Updates the profile of the current user.
- * Restricted by RLS policies to authenticated owners.
- */
+export const uploadAvatar = async (userId: string, file: File): Promise<string> => {
+  const fileExt = file.name.split('.').pop();
+  const fileName = `avatar-${userId}-${Date.now()}.${fileExt}`;
+  
+  const { error } = await supabase.storage
+    .from('cover-art')
+    .upload(fileName, file, { upsert: true });
+
+  if (error) throw new Error(error.message);
+
+  const { data } = supabase.storage.from('cover-art').getPublicUrl(fileName);
+  return data.publicUrl;
+};
+
 export const updateUserProfile = async (
   userId: string,
   profileData: Partial<Omit<Profile, 'id' | 'is_admin' | 'created_at' | 'updated_at'>>
@@ -37,14 +44,6 @@ export const updateUserProfile = async (
   return data;
 };
 
-/**
- * Check if a username is available.
- * Note: Under strict default RLS (where select is "auth.uid() = id"),
- * this will always return true for unauthenticated sign-ups since
- * they cannot query other users' rows. 
- * Therefore, we recommend allowing SELECT using (true) for profile tables
- * to allow this check and future user-searching features.
- */
 export const checkUsernameAvailability = async (username: string): Promise<boolean> => {
   const cleanUsername = username.toLowerCase().trim();
   
@@ -62,8 +61,6 @@ export const checkUsernameAvailability = async (username: string): Promise<boole
     .select('username')
     .eq('username', cleanUsername);
 
-  // If there's an error (e.g. table doesn't exist yet/RLS issues), we fall back gracefully 
-  // and let the Postgres constraint catch duplicates during registration.
   if (error) {
     console.warn('Could not query username availability via API:', error.message);
     return true; 

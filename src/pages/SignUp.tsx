@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Music, Mail, Lock, User, AtSign, Loader2, Sparkles, Check, X } from 'lucide-react';
+import { Music, Mail, Lock, User, AtSign, Loader2, Sparkles, Check, X, Eye, EyeOff } from 'lucide-react';
 import { signUpUser } from '../services/auth';
 import { checkUsernameAvailability } from '../services/profile';
 import { useAuth } from '../hooks/useAuth';
@@ -9,23 +9,21 @@ export const SignUp: React.FC = () => {
   const navigate = useNavigate();
   const { isConfigured } = useAuth();
 
-  // Form Fields
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // States
   const [loading, setLoading] = useState(false);
   const [regError, setRegError] = useState<string | null>(null);
   const [regSuccess, setRegSuccess] = useState(false);
 
-  // Username validation state
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'invalid' | 'taken'>('idle');
   const [usernameError, setUsernameError] = useState<string | null>(null);
 
-  // Real-time username validation
   useEffect(() => {
     if (!isConfigured) return;
     
@@ -36,7 +34,6 @@ export const SignUp: React.FC = () => {
       return;
     }
 
-    // Client-side validation: 3-20 chars, lowercase, numbers, underscores
     const usernameRegex = /^[a-z0-9_]{3,20}$/;
     if (!usernameRegex.test(cleanUsername)) {
       setUsernameStatus('invalid');
@@ -47,7 +44,6 @@ export const SignUp: React.FC = () => {
     setUsernameError(null);
     setUsernameStatus('checking');
 
-    // Debounce username uniqueness check
     const delayDebounceFn = setTimeout(async () => {
       try {
         const isAvailable = await checkUsernameAvailability(cleanUsername);
@@ -58,7 +54,7 @@ export const SignUp: React.FC = () => {
           setUsernameError('Username is already taken');
         }
       } catch (err) {
-        setUsernameStatus('available'); // Fallback if API fails to prevent blocking signup
+        setUsernameStatus('available');
       }
     }, 500);
 
@@ -69,7 +65,6 @@ export const SignUp: React.FC = () => {
     e.preventDefault();
     setRegError(null);
 
-    // Final checks
     if (usernameStatus === 'invalid' || usernameStatus === 'taken') {
       setRegError('Please choose a valid & unique username.');
       return;
@@ -96,13 +91,11 @@ export const SignUp: React.FC = () => {
       );
       
       setRegSuccess(true);
-      // Wait a couple of seconds before sending to login or home
       setTimeout(() => {
         navigate('/');
       }, 3000);
     } catch (err: any) {
       console.error('Signup error:', err);
-      // Parse friendly messages from Supabase or triggers
       if (err.message.includes('unique_username')) {
         setRegError('This username is already taken (DB verification).');
       } else {
@@ -116,7 +109,6 @@ export const SignUp: React.FC = () => {
   return (
     <div className="min-h-screen bg-radial-gradient py-12 px-4 sm:px-6 lg:px-8 flex flex-col justify-center items-center">
       <div className="max-w-md w-full glass-card music-glow rounded-3xl p-8 border border-white/5 shadow-2xl relative overflow-hidden">
-        {/* Decorative ambient gradients */}
         <div className="absolute top-0 left-1/4 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
         <div className="absolute bottom-0 right-1/4 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
@@ -151,7 +143,6 @@ export const SignUp: React.FC = () => {
               </div>
             )}
 
-            {/* Username */}
             <div>
               <label htmlFor="username" className="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">
                 Username <span className="text-red-500">*</span>
@@ -172,7 +163,6 @@ export const SignUp: React.FC = () => {
                   className="block w-full pl-10 pr-10 py-3 bg-neutral-900/60 border border-white/5 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 text-sm transition-all duration-200"
                 />
                 
-                {/* Username state icons */}
                 <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none">
                   {usernameStatus === 'checking' && (
                     <Loader2 className="h-4 w-4 text-purple-400 animate-spin" />
@@ -193,7 +183,6 @@ export const SignUp: React.FC = () => {
               )}
             </div>
 
-            {/* Display Name */}
             <div>
               <label htmlFor="displayName" className="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">
                 Display Name
@@ -215,7 +204,6 @@ export const SignUp: React.FC = () => {
               </div>
             </div>
 
-            {/* Email Address */}
             <div>
               <label htmlFor="email" className="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">
                 Email Address <span className="text-red-500">*</span>
@@ -238,53 +226,64 @@ export const SignUp: React.FC = () => {
               </div>
             </div>
 
-            {/* Password */}
             <div>
               <label htmlFor="password" className="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">
                 Password <span className="text-red-500">*</span>
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-500">
-                  <Lock className="h-4 w-4" />
-                </div>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  disabled={loading}
-                  className="block w-full pl-10 py-3 bg-neutral-900/60 border border-white/5 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 text-sm transition-all duration-200"
-                />
-              </div>
+             <div className="relative">
+               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-500">
+                 <Lock className="h-4 w-4" />
+               </div>
+               <input
+                 id="password"
+                 name="password"
+                 type={showPassword ? 'text' : 'password'}
+                 required
+                 value={password}
+                 onChange={(e) => setPassword(e.target.value)}
+                 placeholder="••••••••"
+                 disabled={loading}
+                 className="block w-full pl-10 pr-10 py-3 bg-neutral-900/60 border border-white/5 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 text-sm transition-all duration-200"
+               />
+               <button
+                 type="button"
+                 onClick={() => setShowPassword(!showPassword)}
+                 className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-zinc-500 hover:text-zinc-300 transition-colors"
+               >
+                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+               </button>
+             </div>
             </div>
 
-            {/* Confirm Password */}
             <div>
               <label htmlFor="confirmPassword" className="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">
                 Confirm Password <span className="text-red-500">*</span>
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-500">
-                  <Lock className="h-4 w-4" />
-                </div>
-                <input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  required
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="••••••••"
-                  disabled={loading}
-                  className="block w-full pl-10 py-3 bg-neutral-900/60 border border-white/5 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 text-sm transition-all duration-200"
-                />
-              </div>
+             <div className="relative">
+               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-500">
+                 <Lock className="h-4 w-4" />
+               </div>
+               <input
+                 id="confirmPassword"
+                 name="confirmPassword"
+                 type={showConfirmPassword ? 'text' : 'password'}
+                 required
+                 value={confirmPassword}
+                 onChange={(e) => setConfirmPassword(e.target.value)}
+                 placeholder="••••••••"
+                 disabled={loading}
+                 className="block w-full pl-10 pr-10 py-3 bg-neutral-900/60 border border-white/5 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 text-sm transition-all duration-200"
+               />
+               <button
+                 type="button"
+                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                 className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-zinc-500 hover:text-zinc-300 transition-colors"
+               >
+                 {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+               </button>
+             </div>
             </div>
 
-            {/* Submit */}
             <button
               type="submit"
               disabled={loading || usernameStatus === 'checking' || usernameStatus === 'taken' || usernameStatus === 'invalid'}
