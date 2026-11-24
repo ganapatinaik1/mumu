@@ -1,263 +1,227 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Bell, Play, Music2, Users } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
-import { updateUserProfile } from '../services/profile';
-import { 
-  Music, LogOut, User, FileText, Check, Settings, 
-  ShieldCheck, Calendar, Activity, Edit3, Image
-} from 'lucide-react';
-import { SupabaseWarning } from '../components/SupabaseWarning';
+import { useSongs } from '../hooks/useSongs';
+import { useFriendships } from '../hooks/useFriends';
+import { usePlayer } from '../hooks/usePlayer';
+import { useSync } from '../contexts/SyncContext';
+import { resolveCover, getTimeGreeting } from '../utils/formatTime';
+import { FavoriteButton } from '../components/common/FavoriteButton';
+import type { Song } from '../types/music';
 
-export const Home: React.FC = () => {
-  const { user, profile, refreshProfile, signOut, isConfigured } = useAuth();
-  
-  // Edit Profile Form State
-  const [displayName, setDisplayName] = useState('');
-  const [bio, setBio] = useState('');
-  const [avatarUrl, setAvatarUrl] = useState('');
+// ─── Horizontal Song Card ───────────────────────────────────────────────────
+const SongCard: React.FC<{ song: Song; queue: Song[]; size?: 'sm' | 'md' | 'lg' }> = ({
+  song, queue, size = 'md',
+}) => {
+  const { playSong, currentSong, isPlaying, togglePlay } = usePlayer();
+  const isCurrent = currentSong?.id === song.id;
+  const cover = resolveCover(song);
+  const dim = size === 'sm' ? 'w-28' : size === 'lg' ? 'w-48' : 'w-36';
 
-  // Status flags
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  // Sync state with profile once loaded
-  useEffect(() => {
-    if (profile) {
-      setDisplayName(profile.display_name || '');
-      setBio(profile.bio || '');
-      setAvatarUrl(profile.avatar_url || '');
-    }
-  }, [profile]);
-
-  if (!isConfigured) {
-    return <SupabaseWarning />;
-  }
-
-  const handleUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user?.id) return;
-    
-    setLoading(true);
-    setErrorMsg(null);
-    setSuccess(false);
-
-    try {
-      await updateUserProfile(user.id, {
-        display_name: displayName.trim(),
-        bio: bio.trim(),
-        avatar_url: avatarUrl.trim(),
-      });
-      await refreshProfile();
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
-    } catch (err: any) {
-      console.error('Profile update error:', err);
-      setErrorMsg(err.message || 'Failed to update profile information.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const setRandomAvatar = () => {
-    const randomId = Math.floor(Math.random() * 1000);
-    setAvatarUrl(`https://api.dicebear.com/7.x/identicon/svg?seed=${randomId}`);
-  };
-
-  const formatDate = (dateString: string) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
+  const handleClick = () => isCurrent ? togglePlay() : playSong(song, queue);
 
   return (
-    <div className="min-h-screen bg-radial-gradient py-10 px-4 sm:px-6 lg:px-8">
-      {/* Header bar */}
-      <nav className="max-w-6xl mx-auto glass-card rounded-2xl py-4 px-6 border border-white/5 flex justify-between items-center mb-10 shadow-lg">
-        <div className="flex items-center space-x-3.5">
-          <div className="bg-purple-900/40 p-2.5 rounded-xl border border-purple-500/20">
-            <Music className="h-5 w-5 text-purple-400" />
+    <motion.div
+      whileTap={{ scale: 0.96 }}
+      onClick={handleClick}
+      className={`${dim} flex-shrink-0 cursor-pointer group`}
+    >
+      <div className="relative aspect-square rounded-xl overflow-hidden bg-neutral-800 mb-2 shadow-md">
+        {cover
+          ? <img src={cover} alt={song.title} className="w-full h-full object-cover" loading="lazy" />
+          : <div className="w-full h-full flex items-center justify-center"><Music2 className="h-8 w-8 text-purple-400/40" /></div>
+        }
+
+        {/* Overlay */}
+        <div className={`absolute inset-0 bg-black/30 flex items-center justify-center transition-opacity ${
+          isCurrent ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+          <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center shadow-lg">
+            {isCurrent && isPlaying
+              ? <div className="flex gap-[3px] items-end h-4 px-1">
+                  {[1,2,3].map(i => (
+                    <div key={i} className="w-[3px] bg-white rounded-full animate-pulse"
+                      style={{ height: `${[55,100,70][i-1]}%`, animationDelay: `${i*0.12}s` }} />
+                  ))}
+                </div>
+              : <Play className="h-4 w-4 text-white fill-white translate-x-0.5" />
+            }
           </div>
-          <span className="font-outfit font-extrabold text-xl tracking-tight text-white">
-            MUMU <span className="text-purple-400 font-medium text-sm">Studio</span>
-          </span>
         </div>
-        <button
-          onClick={signOut}
-          className="flex items-center gap-2 hover:bg-neutral-800 bg-neutral-900 border border-white/5 px-4.5 py-2.5 rounded-xl text-zinc-300 hover:text-white text-xs font-semibold tracking-wider uppercase transition-all duration-200 cursor-pointer hover:border-purple-500/30"
-        >
-          <LogOut className="h-4 w-4" />
-          Log Out
-        </button>
-      </nav>
 
-      {/* Main Board Grid */}
-      <main className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* Profile Card Summary Panel */}
-        <section className="lg:col-span-1 flex flex-col gap-6">
-          <div className="glass-card music-glow rounded-3xl p-6 border border-white/5 shadow-xl flex flex-col items-center">
-            {/* Avatar block */}
-            <div className="relative mb-5 group">
-              <div className="w-28 h-28 rounded-full overflow-hidden border-2 border-purple-500 bg-neutral-900 flex items-center justify-center shadow-lg">
-                {profile?.avatar_url ? (
-                  <img 
-                    src={profile.avatar_url} 
-                    alt={profile.display_name || profile.username} 
-                    className="w-full h-full object-cover" 
-                  />
-                ) : (
-                  <User className="h-12 w-12 text-purple-400/80" />
-                )}
-              </div>
-              {profile?.is_admin && (
-                <div className="absolute -bottom-2 -right-1 bg-purple-600 border border-purple-405 text-white p-1.5 rounded-full shadow-md" title="Admin User">
-                  <ShieldCheck className="h-4 w-4" />
-                </div>
-              )}
-            </div>
+        {/* Favorite button (top-right corner) */}
+        <div className="absolute top-1.5 right-1.5 z-10" onClick={(e) => e.stopPropagation()}>
+          <FavoriteButton songId={song.id} size="sm" />
+        </div>
+      </div>
 
-            <h2 className="text-2xl font-bold font-outfit text-white leading-tight">
-              {profile?.display_name || 'Guest User'}
-            </h2>
-            <p className="text-purple-400 text-sm font-mono mt-1">@{profile?.username || 'unknown'}</p>
+      <p className={`text-[12px] font-semibold truncate ${isCurrent ? 'text-purple-400' : 'text-white'}`}>{song.title}</p>
+      <p className="text-[11px] text-zinc-500 truncate mt-0.5">{song.artist?.name ?? 'Unknown'}</p>
+    </motion.div>
+  );
+};
 
-            <span className="mt-4 px-3.5 py-1 text-[11px] font-semibold tracking-wider text-purple-300 bg-purple-500/10 border border-purple-500/20 rounded-full flex items-center gap-1.5 uppercase">
-              <Activity className="h-3 w-3 text-purple-400" />
-              Creator Session Active
-            </span>
+// ─── Section Header ─────────────────────────────────────────────────────────
+const Section: React.FC<{
+  title: string; subtitle?: string; songs: Song[]; size?: 'sm' | 'md' | 'lg';
+}> = ({ title, subtitle, songs, size }) => {
+  if (!songs.length) return null;
+  return (
+    <section className="mb-7">
+      <div className="flex items-end justify-between px-4 mb-3">
+        <div>
+          <h2 className="text-[17px] font-bold text-white">{title}</h2>
+          {subtitle && <p className="text-xs text-zinc-500 mt-0.5">{subtitle}</p>}
+        </div>
+        <button className="text-xs text-purple-400 font-semibold">See all</button>
+      </div>
+      <div className="flex gap-3 overflow-x-auto scrollbar-none px-4 pb-1">
+        {songs.map((s) => <SongCard key={s.id} song={s} queue={songs} size={size} />)}
+      </div>
+    </section>
+  );
+};
 
-            {/* Profile Fields Info */}
-            <div className="w-full border-t border-white/5 mt-6 pt-5 space-y-4 text-sm text-zinc-400">
-              <div className="flex justify-between items-center text-xs">
-                <span className="flex items-center gap-2 text-zinc-500"><FileText className="h-3.5 w-3.5" /> Bio</span>
-                <span className="text-zinc-300 block max-w-[180px] text-right truncate" title={profile?.bio || 'No bio written yet'}>
-                  {profile?.bio || 'No bio written yet'}
-                </span>
+// ─── Skeleton ───────────────────────────────────────────────────────────────
+const SectionSkeleton: React.FC = () => (
+  <section className="mb-7">
+    <div className="px-4 mb-3">
+      <div className="h-4 w-32 bg-neutral-800 rounded animate-pulse mb-1" />
+      <div className="h-3 w-20 bg-neutral-800 rounded animate-pulse" />
+    </div>
+    <div className="flex gap-3 px-4">
+      {[1,2,3,4].map(i => (
+        <div key={i} className="w-36 flex-shrink-0 animate-pulse">
+          <div className="aspect-square rounded-xl bg-neutral-800 mb-2" />
+          <div className="h-3 bg-neutral-800 rounded w-3/4 mb-1" />
+          <div className="h-2.5 bg-neutral-800 rounded w-1/2" />
+        </div>
+      ))}
+    </div>
+  </section>
+);
+
+// ─── Quick Play Row ──────────────────────────────────────────────────────────
+const QuickPlays: React.FC<{ songs: Song[] }> = ({ songs }) => {
+  const { playSong, currentSong, togglePlay } = usePlayer();
+  const recent = songs.slice(0, 6);
+  if (!recent.length) return null;
+
+  return (
+    <section className="mb-7 px-4">
+      <div className="grid grid-cols-2 gap-2">
+        {recent.map((s) => {
+          const isCurrent = currentSong?.id === s.id;
+          const cover = resolveCover(s);
+          return (
+            <motion.button
+              key={s.id}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => isCurrent ? togglePlay() : playSong(s, recent)}
+              className="flex items-center gap-2.5 bg-neutral-800/70 rounded-xl overflow-hidden active:bg-neutral-700/70 transition-colors text-left"
+            >
+              <div className="w-12 h-12 flex-shrink-0 overflow-hidden bg-neutral-700">
+                {cover
+                  ? <img src={cover} alt="" className="w-full h-full object-cover" />
+                  : <div className="w-full h-full flex items-center justify-center"><Music2 className="h-5 w-5 text-purple-400/40" /></div>
+                }
               </div>
-              <div className="flex justify-between items-center text-xs">
-                <span className="flex items-center gap-2 text-zinc-500"><Calendar className="h-3.5 w-3.5" /> Established</span>
-                <span className="text-zinc-300 font-mono">
-                  {profile?.created_at ? formatDate(profile.created_at) : 'N/A'}
-                </span>
-              </div>
-              <div className="flex justify-between items-center text-xs">
-                <span className="flex items-center gap-2 text-zinc-500"><Settings className="h-3.5 w-3.5" /> Account ID</span>
-                <span className="text-zinc-300 font-mono text-[9px] truncate max-w-[80px]" title={user?.id}>
-                  {user?.id ? `${user.id.substring(0, 8)}...` : 'N/A'}
-                </span>
-              </div>
-            </div>
+              <p className={`text-[12px] font-bold truncate pr-2 ${isCurrent ? 'text-purple-400' : 'text-white'}`}>{s.title}</p>
+            </motion.button>
+          );
+        })}
+      </div>
+    </section>
+  );
+};
+
+// ─── Home Page ───────────────────────────────────────────────────────────────
+export const Home: React.FC = () => {
+  const { user, profile } = useAuth();
+  const nav = useNavigate();
+  const { data: songs = [], isLoading } = useSongs();
+  const { pendingRequests } = useSync();
+  const { data: allFriendships = [] } = useFriendships(user?.id ?? '');
+
+  const greeting = getTimeGreeting();
+  const displayName = (profile?.display_name || profile?.username || 'there').toUpperCase();
+  
+  const unreadFriendRequests = allFriendships.filter(f => f.status === 'pending' && f.addressee_id === user?.id).length;
+  const unread = pendingRequests.length + unreadFriendRequests;
+
+  // derive "sections" from the single song list — in a real app you'd have separate queries
+  const recentlyPlayed = songs.slice(0, 10);
+  const madeForYou     = [...songs].reverse().slice(0, 10);
+  const trending       = songs.slice(2, 12);
+
+  return (
+    <div className="min-h-screen bg-black/90 pb-36">
+      {/* Sticky Header */}
+      <div className="sticky top-0 z-20 bg-black/95 backdrop-blur-xl pt-safe">
+        <div className="px-4 pt-5 pb-4 flex items-start justify-between">
+          <div>
+            <p className="text-[11px] text-zinc-500 font-semibold uppercase tracking-widest mb-0.5">{greeting}</p>
+            <h1 className="text-2xl font-extrabold font-outfit text-white leading-tight">{displayName}</h1>
           </div>
-        </section>
 
-        {/* Update Profile Panel */}
-        <section className="lg:col-span-2">
-          <div className="glass-card music-glow rounded-3xl p-8 border border-white/5 shadow-xl">
-            <div className="flex items-center gap-3.5 mb-6">
-              <div className="bg-purple-900/40 p-2 rounded-xl border border-purple-500/20 text-purple-400">
-                <Edit3 className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold font-outfit text-white">Customize Studio Profile</h3>
-                <p className="text-zinc-400 text-xs mt-0.5">Customize how your public card displays to other curators in search results.</p>
-              </div>
-            </div>
+          {/* Header Controls */}
+          <div className="flex items-center gap-2 mt-1">
+            {/* Sync Button */}
+            <motion.button
+              whileTap={{ scale: 0.88 }}
+              onClick={() => nav('/sync')}
+              className={`px-3 py-1.5 rounded-full border text-[11px] font-bold text-white flex items-center gap-1.5 cursor-pointer ${pendingRequests.length > 0 ? 'bg-purple-600/40 border-purple-500/60' : 'bg-neutral-800/60 border-white/8'}`}
+            >
+              <Users className="h-3.5 w-3.5 text-purple-400" />
+              Sync{pendingRequests.length > 0 && <span className="bg-purple-400 text-black text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center">{pendingRequests.length}</span>}
+            </motion.button>
 
-            <form onSubmit={handleUpdate} className="space-y-6">
-              {errorMsg && (
-                <div className="bg-red-950/40 border border-red-500/30 text-red-200 p-4 rounded-xl text-xs">
-                  {errorMsg}
-                </div>
-              )}
-
-              {success && (
-                <div className="bg-green-950/40 border border-green-500/30 text-green-200 p-4 rounded-xl text-xs flex items-center space-x-2 animate-fadeIn">
-                  <Check className="h-4 w-4 text-green-400 flex-shrink-0" />
-                  <span>Profile updated successfully!</span>
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Display Name input */}
-                <div>
-                  <label htmlFor="editDisplayName" className="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">
-                    Studio Display Name
-                  </label>
-                  <input
-                    id="editDisplayName"
-                    type="text"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    placeholder="Enter artist name"
-                    disabled={loading}
-                    className="block w-full px-4 py-3 bg-neutral-900/60 border border-white/5 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 text-sm transition-all duration-200"
-                  />
-                </div>
-
-                {/* Avatar URL input */}
-                <div>
-                  <label htmlFor="editAvatar" className="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">
-                    Avatar Image URL
-                  </label>
-                  <div className="flex gap-2">
-                    <div className="relative flex-grow">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500">
-                        <Image className="h-4 w-4" />
-                      </div>
-                      <input
-                        id="editAvatar"
-                        type="url"
-                        value={avatarUrl}
-                        onChange={(e) => setAvatarUrl(e.target.value)}
-                        placeholder="https://assets.site/avatar.jpg"
-                        disabled={loading}
-                        className="block w-full pl-9 pr-4 py-3 bg-neutral-900/60 border border-white/5 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 text-sm transition-all duration-200"
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={setRandomAvatar}
-                      title="Generate random identicon SVG"
-                      className="px-3 bg-neutral-800 hover:bg-neutral-700 border border-white/5 text-purple-400 font-semibold rounded-xl text-xs transition-all duration-200 cursor-pointer active:scale-95"
-                    >
-                      Randomize
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Bio description input */}
-              <div>
-                <label htmlFor="editBio" className="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">
-                  Artist Autobiography / Biography
-                </label>
-                <textarea
-                  id="editBio"
-                  rows={4}
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  placeholder="Share a short bio with listeners..."
-                  disabled={loading}
-                  className="block w-full px-4 py-3 bg-neutral-900/60 border border-white/5 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 text-sm transition-all duration-200 resize-none font-sans"
-                />
-              </div>
-
-              {/* Submit update */}
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-fit flex justify-center items-center py-3 px-6 rounded-xl text-xs font-semibold uppercase tracking-wider text-white bg-purple-600 hover:bg-purple-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-200 cursor-pointer shadow-lg disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-purple-500/10 active:scale-[0.99] ml-auto border border-purple-500/20"
+            {/* Notification Bell */}
+            <div className="relative">
+              <motion.button
+                whileTap={{ scale: 0.88 }}
+                onClick={() => nav('/notifications')}
+                className="relative p-2 rounded-full bg-neutral-800/60 border border-white/8 cursor-pointer"
               >
-                {loading ? 'Saving...' : 'Save Profile Changes'}
-              </button>
-            </form>
+                <Bell className="h-5 w-5 text-zinc-300" />
+                {unread > 0 && (
+                  <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-purple-400 border border-black" />
+                )}
+              </motion.button>
+            </div>
           </div>
-        </section>
+        </div>
+      </div>
 
-      </main>
+      {/* Content */}
+      <div className="pt-2">
+        {isLoading ? (
+          <>
+            <SectionSkeleton />
+            <SectionSkeleton />
+            <SectionSkeleton />
+          </>
+        ) : (
+          <>
+            {/* Quick play grid — show recently loaded songs */}
+            {recentlyPlayed.length > 0 && (
+              <div className="mb-7">
+                <div className="px-4 mb-3">
+                  <h2 className="text-[17px] font-bold text-white">Quick picks</h2>
+                </div>
+                <QuickPlays songs={recentlyPlayed} />
+              </div>
+            )}
+
+            <Section title="Library" subtitle={`${songs.length} songs`} songs={songs} size="md" />
+            <Section title="Made For You" subtitle="Based on your taste" songs={madeForYou} size="md" />
+            <Section title="Trending" subtitle="Hot right now" songs={trending} size="lg" />
+          </>
+        )}
+      </div>
     </div>
   );
 };
+
+export default Home;
