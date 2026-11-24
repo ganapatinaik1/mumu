@@ -1,34 +1,59 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-primary: #8b5cf6; /* Indigo/Violet color for music theme */
+  --color-brand-primary: #8b5cf6;
   --color-brand-dark: #121212;
   --color-brand-card: #1e1e1e;
 }
 
-/* Google Fonts Import for Outfit & Inter */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
-/* Custom scrollbars and styling */
+html {
+  overscroll-behavior-y: none;
+  -webkit-overflow-scrolling: auto;
+  /* Smooth accent color transitions for all accent-dependent properties */
+  --accent-transition: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color var(--accent-transition), color var(--accent-transition);
+}
+
+* { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+
 body {
-  background-color: #03000a;
+  background-color: #000;
   color: #f3f4f6;
   font-family: 'Outfit', 'Inter', system-ui, sans-serif;
   margin: 0;
   padding: 0;
+  overscroll-behavior-y: none;
+  overflow-x: hidden;
 }
 
 #root {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
 }
 
-/* Glow effects and glassmorphism helpers */
-.music-glow {
-  box-shadow: 0 0 50px -10px rgba(139, 92, 246, 0.15);
+/* Safe area helpers */
+.pt-safe   { padding-top:    env(safe-area-inset-top, 0px); }
+.pb-safe   { padding-bottom: env(safe-area-inset-bottom, 0px); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+
+/* Hide scrollbar */
+.scrollbar-none::-webkit-scrollbar { display: none; }
+.scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+
+/*
+  Floating controls: Mini Player + Bottom Navigation.
+  Mini player sits above the bottom nav with a small gap.
+  Content needs bottom padding to avoid being hidden.
+*/
+.music-player-bar {
+  /* Positioning handled by FloatingControls container */
 }
 
+/* Glass card */
 .glass-card {
   background: rgba(18, 18, 18, 0.7);
   backdrop-filter: blur(16px);
@@ -36,8 +61,35 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.bg-radial-gradient {
-  background: radial-gradient(circle at top left, rgba(139, 92, 246, 0.12) 0%, transparent 40%),
-              radial-gradient(circle at bottom right, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
-              #03000a;
+.music-glow {
+  box-shadow: 0 0 50px -10px rgba(139, 92, 246, 0.15);
 }
+
+.bg-radial-gradient {
+  background:
+    radial-gradient(circle at top left, rgba(139, 92, 246, 0.12) 0%, transparent 40%),
+    radial-gradient(circle at bottom right, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
+    #000;
+}
+
+/* Global accent color utility — uses CSS custom properties */
+.accent-text { color: var(--accent-color, #8b5cf6); }
+.accent-bg { background-color: var(--accent-color, #8b5cf6); }
+.accent-border { border-color: var(--accent-color, #8b5cf6); }
+.accent-ring { box-shadow: 0 0 0 1px var(--accent-color, #8b5cf6); }
+.accent-shadow { box-shadow: 0 0 20px -5px var(--accent-color-rgb, 139, 92, 246); }
+
+/* Smooth transitions for any element using accent colors */
+.accent-transition {
+  transition: background-color var(--accent-transition), 
+              border-color var(--accent-transition), 
+              color var(--accent-transition),
+              box-shadow var(--accent-transition);
+}
+
+/* Animated equalizer bars */
+@keyframes eq-bar {
+  0%, 100% { transform: scaleY(0.4); }
+  50%       { transform: scaleY(1); }
+}
+
